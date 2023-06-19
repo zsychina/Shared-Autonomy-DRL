@@ -1,0 +1,6 @@
+test*.*
+tempCodeRunnerFile.py
+__pycache__/
+legacy/
+out/*
+!out/.gitkeep
