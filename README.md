@@ -1,6 +1,6 @@
 # Implementation of [Shared Autonomy via Deep Reinforcement Learning](https://www.roboticsproceedings.org/rss14/p05.pdf)
 
-*正在施工 Unfinish
+*正在施工 Unfinished
 
 本仓库是对[这篇论文](https://www.roboticsproceedings.org/rss14/p05.pdf)的复现
   

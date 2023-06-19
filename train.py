@@ -57,10 +57,10 @@ def user_policy(state, user_action):
     state_values = policy_net(state_cat) - policy_net(state_cat).min(1)[0]
     # mask can never be all false, because there must exist a biggest value
     mask = torch.gt(state_values, (1 - alpha) * state_values.max(1)[0]) 
-    a_suboptimal = torch.nonzero(mask)[:, 1].view(-1, 1)
+    a_candidates = torch.nonzero(mask)[:, 1].view(-1, 1)
     # dist is one-hot
-    dist = torch.where(a_suboptimal == user_action, torch.tensor(1), torch.tensor(0))
-    a_t = a_suboptimal[dist.argmax()].view(1, 1)
+    dist = torch.where(a_candidates == user_action, torch.tensor(1), torch.tensor(0))
+    a_t = a_candidates[dist.argmax()].view(1, 1)
     return a_t
 
 
