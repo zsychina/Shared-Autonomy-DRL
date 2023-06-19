@@ -14,7 +14,7 @@ REDDY S, DRAGAN A, LEVINE S. Shared Autonomy via Deep Reinforcement Learning[C/O
 ## 安装 Install
 
 ```zsh
-conda install gym[all]
+conda install -c conda-forge gym
 conda install pytorch
 ```
 
