@@ -3,20 +3,17 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import gym
-import pygame
-import time
 
 from network import Qnet
 from helper import Transition, ReplayMemory, human_action
 
-BATCH_SIZE = 128
+BATCH_SIZE = 16
 GAMMA = 0.9
 LR = 1e-4
-# little episode each run, more run times
-episode_num = 50
+episode_num = 600
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-env = gym.make("LunarLander-v2", render_mode='human')
+env = gym.make("LunarLander-v2")
 
 action_n = env.action_space.n
 state_n = len(env.observation_space.sample()) + 1 # add human_action
@@ -24,9 +21,7 @@ state_n = len(env.observation_space.sample()) + 1 # add human_action
 
 policy_net = Qnet(state_n, action_n).to(device)
 target_net = Qnet(state_n, action_n).to(device)
-
-policy_net.load_state_dict(torch.load('./out/policy.pt'))
-target_net.load_state_dict(torch.load('./out/target.pt'))
+target_net.load_state_dict(policy_net.state_dict())
 
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
@@ -50,8 +45,7 @@ def optimize_model():
     
     optimizer.zero_grad()
     loss.backward()
-
-    torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
+    # torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
     
 
@@ -69,7 +63,7 @@ def user_policy(state, user_action):
     return a_t
 
 
-# train with human input
+# train without human input
 step_cnt = 0
 episode_rewards = []
 for episode_idx in range(episode_num):
@@ -81,12 +75,8 @@ for episode_idx in range(episode_num):
         step_cnt += 1
         # 1. Sample action At
         # real user action, or random value, or last value
-        keys = pygame.key.get_pressed()
-        if any(keys):
-            user_action = human_action(keys)
-        else:
-            user_action = env.action_space.sample()
-            user_action = torch.tensor(user_action, device=device).view(1, 1)
+        user_action = env.action_space.sample()
+        user_action = torch.tensor(user_action, device=device).view(1, 1)
         
         action = user_policy(state, user_action)
         
@@ -112,9 +102,7 @@ for episode_idx in range(episode_num):
         
         # 4. Optimize Model
         if terminated or truncated:
-            print('!! THIS EPISODE ENDED, PLEASE AFK !!')
-            time.sleep(0.3)
-            for k in range(1000):
+            for k in range(100):
                 optimize_model()
             break
         
@@ -126,10 +114,9 @@ for episode_idx in range(episode_num):
             for key in target_net_state_dict:
                 target_net_state_dict[key] = policy_net_state_dict[key]
             target_net.load_state_dict(target_net_state_dict)
-    
+        
     episode_rewards.append(episode_reward)
     print("Episode {}, reward {}".format(episode_idx, episode_reward))
-
 
 env.close()
 
@@ -137,9 +124,10 @@ env.close()
 import matplotlib.pyplot as plt
 plt.plot(episode_rewards)
 plt.show()
-plt.savefig('./out/lander_rewards_human.png')
+plt.savefig('./out/lander_rewards_nohuman.png')
 
 # save
 torch.save(policy_net.state_dict(), './out/policy.pt')
 torch.save(target_net.state_dict(), './out/target.pt')
+
 

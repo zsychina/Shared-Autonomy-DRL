@@ -20,8 +20,9 @@ conda install pytorch
 
 ## 使用 Usage
 
-run this first  
-then
+1. run [pretrain.py](./pretrain.py) to get a pretrained policy network and a target network without human in the loop
+2. run [train.py](./train.py) to fine-tuning to networks with human in the loop
+3. run [run.py](./run.py) to test the result of the trained networks
 
 ## 背景 Background
 
