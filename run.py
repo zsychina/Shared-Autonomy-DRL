@@ -35,13 +35,15 @@ def user_policy(state, user_action):
 
 state, _ = env.reset()
 state = torch.tensor(state, device=device).unsqueeze(0)
+user_action = torch.tensor(0, device=device).view(1, 1) # action init
 while True:
+    state_cat = torch.cat((state, user_action), dim=1)
+    
     keys = pygame.key.get_pressed()
     if any(keys):
         user_action = human_action(keys)
     else:
-        user_action = env.action_space.sample()
-        user_action = torch.tensor(user_action, device=device).view(1, 1)
+        user_action = target_net(state_cat).max(1)[1].view(1, 1)
         
     action = user_policy(state, user_action)
     

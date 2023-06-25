@@ -59,7 +59,7 @@ def sensor_pilot(state):
     return torch.tensor(action, device=device).view(1, 1)
     
 
-def user_policy(state, user_action): 
+def user_policy(state, user_action):
     alpha = 0.01
     state_cat = torch.cat((state, user_action), dim=1)
     # Q'
@@ -86,9 +86,9 @@ for episode_idx in range(episode_num):
         # 1. Sample action At
         # real user action, or random value, or last value
         # user_action = env.action_space.sample()
-        user_action = sensor_pilot(state)
         # user_action = torch.tensor(user_action, device=device).view(1, 1)
         
+        user_action = sensor_pilot(state)
         action = user_policy(state, user_action)
         
         state_cat = torch.cat((state, user_action), dim=1)
@@ -113,12 +113,12 @@ for episode_idx in range(episode_num):
         
         # 4. Optimize Model
         if terminated or truncated:
-            for k in range(100):
+            for k in range(50):
                 optimize_model()
             break
         
         # 5. every C steps reset \hat{Q}=Q
-        if step_cnt % 1000 == 0:
+        if step_cnt % 2000 == 0:
             step_cnt = 0
             target_net_state_dict = target_net.state_dict()
             policy_net_state_dict = policy_net.state_dict()
@@ -134,7 +134,7 @@ env.close()
 # plot
 import matplotlib.pyplot as plt
 plt.plot(episode_rewards)
-plt.show()
+# plt.show()
 plt.savefig('./out/lander_rewards_nohuman.png')
 
 # save
