@@ -7,10 +7,10 @@ import gym
 from network import Qnet
 from helper import Transition, ReplayMemory, human_action
 
-BATCH_SIZE = 16
+BATCH_SIZE = 128
 GAMMA = 0.9
 LR = 1e-4
-episode_num = 600
+episode_num = 1000
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make("LunarLander-v2")
@@ -27,7 +27,7 @@ optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 def optimize_model():
-    if len(memory) < 10 * BATCH_SIZE:
+    if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
@@ -48,9 +48,19 @@ def optimize_model():
     # torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
     
+def sensor_pilot(state):
+    x = state[0][0].item()
+    # x < 0: turn right
+    # x > 0: turn left
+    if x < 0:
+        action = 3
+    else:
+        action = 1
+    return torch.tensor(action, device=device).view(1, 1)
+    
 
 def user_policy(state, user_action): 
-    alpha = 0.8    
+    alpha = 0.01
     state_cat = torch.cat((state, user_action), dim=1)
     # Q'
     state_values = policy_net(state_cat) - policy_net(state_cat).min(1)[0]
@@ -75,8 +85,9 @@ for episode_idx in range(episode_num):
         step_cnt += 1
         # 1. Sample action At
         # real user action, or random value, or last value
-        user_action = env.action_space.sample()
-        user_action = torch.tensor(user_action, device=device).view(1, 1)
+        # user_action = env.action_space.sample()
+        user_action = sensor_pilot(state)
+        # user_action = torch.tensor(user_action, device=device).view(1, 1)
         
         action = user_policy(state, user_action)
         
